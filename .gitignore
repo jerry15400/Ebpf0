@@ -1,0 +1,6 @@
+bin
+.vscode
+*.ll
+*.c
+*.h
+*.sh
