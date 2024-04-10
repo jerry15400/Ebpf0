@@ -33,14 +33,14 @@ $(LIBBPF):
 	fi
 
 
-switch.o: tools.c tools.h bloom.c bloom.h ./switch/switch.c
+switch.o:  ./switch/switch.c
 	$(CLANG) -S -target bpf $(BPF_CFLAGS) -O3 -emit-llvm -c -g -o ${@:.o=.ll} $<
 	$(LLC) -march=bpf -filetype=obj -o $@ ${@:.o=.ll}
 
-ingress.o: tools.c tools.h ./server/server.h ./server/ingress.c
+ingress.o: ./server/ingress.c
 	$(CLANG) -S -target bpf $(BPF_CFLAGS) -O3 -emit-llvm -c -g -o ${@:.o=.ll} $<
 	$(LLC) -march=bpf -filetype=obj -o $@ ${@:.o=.ll}
 
-egress.o: tools.c tools.h ./server/server.h ./server/egress.c
+egress.o:  /server/egress.c
 	$(CLANG) -S -target bpf $(BPF_CFLAGS) -O3 -emit-llvm -c -g -o ${@:.o=.ll} $<
 	$(LLC) -march=bpf -filetype=obj -o $@ ${@:.o=.ll}
