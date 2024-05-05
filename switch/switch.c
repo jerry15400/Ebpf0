@@ -1,5 +1,6 @@
 #include"../tools.h"
 #include"../bloom.h"
+#define DEBUG 1
 
 const int  MAX_ENTRY =100;
 
@@ -25,10 +26,18 @@ int ingress(struct xdp_md *ctx)
     if(ip->protocol==IPPROTO_UDP) return XDP_PASS;
     struct tcphdr *tcp=ip+sizeof(*ip);
     if(tcp+sizeof(*tcp)>data_end) return XDP_DROP;
-    u32 hash=cookie_gen(ip->saddr,ip->daddr,tcp->source,tcp->dest);
     if(tcp->syn&&!tcp->ack)  //SYN->3WHS
     {
-        tcp->ack_seq=tcp->seq;
+        if(DEBUG)
+        {
+            bpf_printk("Client SYN\n");
+            bpf_printk("source ip: %d\n",ip->saddr);
+            bpf_printk("dest ip: %d\n",ip->daddr);
+            bpf_printk("source port: %d\n",tcp->source);
+            bpf_printk("dest port: %d\n",tcp->dest);
+        }
+        u32 hash=cookie_gen(ip->saddr,ip->daddr,tcp->source,tcp->dest,tcp->seq);
+        tcp->ack_seq=tcp->seq+1;
         tcp->seq=hash;
         swap(&tcp->source,&tcp->dest,sizeof(tcp->dest));
         swap(&ip->saddr,&ip->daddr,sizeof(ip->daddr));
@@ -38,10 +47,17 @@ int ingress(struct xdp_md *ctx)
     }
     else if(!tcp->syn&&tcp->ack) //ACK
     {
+        u32 hash=cookie_gen(ip->saddr,ip->daddr,tcp->source,tcp->dest,tcp->seq-1);
         if(tcp->ack_seq==hash+1) //pass
         {
+            if(DEBUG)
+            {
+                bpf_printk("Cookie pass\n");
+                bpf_printk("ece flag= %d\n",tcp->ece);
+            }
             bpf_map_update_elem(&hash_map,&hash,&tcp->seq,BPF_ANY);
             tcp->seq--;
+            tcp->ece=1;
         }
         else
         {
@@ -61,7 +77,8 @@ int ingress(struct xdp_md *ctx)
     }
     else
     {
-        if(bf_is_exist(&bloom_filter,hash)) return XDP_PASS;
+        bpf_printk("Error\n");
+        //if(bf_is_exist(&bloom_filter,hash)) return XDP_PASS;
     }
     return XDP_DROP;
 }

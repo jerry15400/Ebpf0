@@ -46,7 +46,7 @@ static inline uint32_t rol(uint32_t word, uint32_t shift){
 	return (word<<shift) | (word >> (32 - shift));
 }
 
-static inline u32 cookie_gen(u32 src, u32 dst, u16 src_port, u16 dst_port)
+static inline u32 cookie_gen(u32 src, u32 dst, u16 src_port, u16 dst_port,u32 seq_no)
 {	
 	//initialization 
 	int v0 = c0 ^ key0;
@@ -74,10 +74,10 @@ static inline u32 cookie_gen(u32 src, u32 dst, u16 src_port, u16 dst_port)
 	v0 = v0 ^ ntohl(ports); 
 
 	//fourth message 
-	/*v3 = v3 ^ ntohl(seq_no);
+	v3 = v3 ^ ntohl(seq_no);
 	SIPROUND;
 	SIPROUND;
-	v0 = v0 ^ ntohl(seq_no); */
+	v0 = v0 ^ ntohl(seq_no);
 	
 	//finalization
 	v2 = v2 ^ 0xFF; 
