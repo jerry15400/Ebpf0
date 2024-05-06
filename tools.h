@@ -105,7 +105,10 @@ static inline void swap(void *a,void *b,u64 size)
 
 static __always_inline u16 csum_fold_helper(u64 csum)
 {
-    while(csum>>16) csum=(csum&0xffff)+(csum>>16);
+    for(int i=0;i<4;i++)
+    {
+        if(csum>>16) csum=(csum&0xffff)+(csum>>16);
+    }
     return ~csum;
 }
 
