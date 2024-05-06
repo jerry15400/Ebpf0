@@ -19,13 +19,13 @@ int ingress(struct xdp_md *ctx)
     void *data=(void*)(long)ctx->data;
     void *data_end=(void*)(long)ctx->data_end;
     struct ethhdr *eth=data;
-    if(eth+sizeof(*eth)>data_end) return XDP_DROP;
+    if(data+sizeof(*eth)>data_end) return XDP_DROP;
     if(eth->h_proto!=htons(ETH_P_IP)) return XDP_PASS;
     struct iphdr *ip=data+sizeof(*eth);
-    if(ip+sizeof(*ip)>data_end) return XDP_DROP;
+    if(data+sizeof(*eth)+sizeof(*ip)>data_end) return XDP_DROP;
     if(ip->protocol!=IPPROTO_TCP) return XDP_PASS;
-    struct tcphdr *tcp=ip+sizeof(*ip);
-    if(tcp+sizeof(*tcp)>data_end) return XDP_DROP;
+    struct tcphdr *tcp=data+sizeof(*eth)+sizeof(*ip);
+    if(data+sizeof(*eth)+sizeof(*ip)+sizeof(*tcp)>data_end) return XDP_DROP;
     if(tcp->syn&&!tcp->ack)  //SYN->3WHS
     {
         if(DEBUG)
