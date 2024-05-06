@@ -54,6 +54,7 @@ int ingress(struct xdp_md *ctx)
     }
     else if(!tcp->syn&&tcp->ack) //ACK
     {
+        bpf_printk("ACK received\n");
         u32 hash=cookie_gen(ip->saddr,ip->daddr,tcp->source,tcp->dest,tcp->seq-1);
         if(tcp->ack_seq==hash+1) //pass
         {
@@ -80,7 +81,7 @@ int ingress(struct xdp_md *ctx)
             }
             return XDP_DROP;
         }
-        return XDP_PASS;
+        return XDP_TX;
     }
     else
     {
