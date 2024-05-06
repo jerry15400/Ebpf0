@@ -85,6 +85,10 @@ int ingress(struct xdp_md *ctx)
     else
     {
         bpf_printk("Error\n");
+        bpf_printk("SYN: %d\n",tcp->syn);
+        bpf_printk("ACK: %d\n",tcp->ack);
+        bpf_printk("RST: %d\n",tcp->rst);
+
         //if(bf_is_exist(&bloom_filter,hash)) return XDP_PASS;
     }
     return XDP_DROP;

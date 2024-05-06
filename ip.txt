@@ -8,5 +8,7 @@ chmod +x tc.sh
 ./tc.sh eth0 egress.o 0
 ip link show
 
+mount -t debugfs none /sys/kernel/debug
+cat /sys/kernel/debug/tracing/trace_pipe
 
 https://hackmd.io/@shixinh70/BkxMS99_a
