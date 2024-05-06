@@ -48,7 +48,7 @@ int ingress(struct xdp_md *ctx)
         tcp->ack=1; // flag=0x18
         u32 aflag=*flag_ptr;
         u32 csum=tcp->check;
-        csum=bpf_csum_diff(bflag,4,aflag,4,~csum);
+        csum=bpf_csum_diff(&bflag,4,&aflag,4,~csum);
         tcp->check=csum_fold_helper(csum);
         return XDP_TX;
     }
