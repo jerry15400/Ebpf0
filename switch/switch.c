@@ -42,8 +42,13 @@ int ingress(struct xdp_md *ctx)
         swap(&tcp->source,&tcp->dest,sizeof(tcp->dest));
         swap(&ip->saddr,&ip->daddr,sizeof(ip->daddr));
         swap(eth->h_source,eth->h_dest,sizeof(eth->h_dest));
+        u32 *flag_ptr=(void*)tcp+12;
+        if((void*)flag_ptr+4>data_end) return XDP_DROP;
+        u32 bflag=*flag_ptr;
         tcp->ack=1; // flag=0x18
-        compute_tcp_checksum(ip,(unsigned short*)ip+(ip->ihl<<2),tcp);
+        u32 aflag=*flag_ptr;
+        tcp->check=bpf_csum_diff(bflag,4,aflag,4,~(tcp->check));
+        tcp->check=csum_fold_helper(tcp->check);
         return XDP_TX;
     }
     else if(!tcp->syn&&tcp->ack) //ACK
