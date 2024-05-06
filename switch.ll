@@ -110,8 +110,8 @@ define dso_local i32 @ingress(%struct.xdp_md* nocapture readonly %0) #3 section 
 36:                                               ; preds = %31
   %37 = getelementptr i8, i8* %19, i64 23, !dbg !317
   %38 = load i8, i8* %37, align 1, !dbg !317, !tbaa !319
-  %39 = icmp eq i8 %38, 17, !dbg !321
-  br i1 %39, label %225, label %40, !dbg !322
+  %39 = icmp eq i8 %38, 6, !dbg !321
+  br i1 %39, label %40, label %225, !dbg !322
 
 40:                                               ; preds = %36
   call void @llvm.dbg.value(metadata i8* %32, metadata !215, metadata !DIExpression()), !dbg !287
