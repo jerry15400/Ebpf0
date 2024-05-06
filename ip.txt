@@ -2,7 +2,11 @@ router: 172.17.0.2
 ubuntu1: 172.21.0.3, ip route add 172.22.0.0/16 via 172.21.0.2
 ubuntu2: 172.22.0.3, ip route add 172.21.0.0/16 via 172.22.0.2
 ip link set eth1 xdpgeneric object ./router.o
+ip link set eth1 xdpgeneric off
 
 chmod +x tc.sh
 ./tc.sh eth0 egress.o 0
 ip link show
+
+
+https://hackmd.io/@shixinh70/BkxMS99_a

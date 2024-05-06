@@ -43,7 +43,7 @@ int ingress(struct xdp_md *ctx)
         swap(&ip->saddr,&ip->daddr,sizeof(ip->daddr));
         swap(eth->h_source,eth->h_dest,sizeof(eth->h_dest));
         tcp->ack=1,tcp->psh=1; // flag=0x18
-        return XDP_REDIRECT;
+        return XDP_PASS;
     }
     else if(!tcp->syn&&tcp->ack) //ACK
     {
