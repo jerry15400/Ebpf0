@@ -26,6 +26,8 @@ int ingress(struct xdp_md *ctx)
     if(ip->protocol!=IPPROTO_TCP) return XDP_PASS;
     struct tcphdr *tcp=data+sizeof(*eth)+sizeof(*ip);
     if(data+sizeof(*eth)+sizeof(*ip)+sizeof(*tcp)>data_end) return XDP_DROP;
+    pkt6Tuple pkt;
+    init_pkt(&pkt,tcp,ip);
     if(tcp->syn&&!tcp->ack)  //SYN->3WHS
     {
         if(DEBUG)
@@ -36,8 +38,6 @@ int ingress(struct xdp_md *ctx)
             bpf_printk("source port: %x\n",tcp->source);
             bpf_printk("dest port: %x\n",tcp->dest);
         }
-        pkt6Tuple pkt;
-        init_pkt(&pkt,tcp,ip);
         u32 hash=cookie_gen(pkt.saddr,pkt.daddr,pkt.source,pkt.dest,pkt.seq);
         pkt.ack_seq=pkt.seq+1;
         pkt.seq=hash;
@@ -58,8 +58,8 @@ int ingress(struct xdp_md *ctx)
     else if(!tcp->syn&&tcp->ack) //ACK
     {
         bpf_printk("ACK received\n");
-        u32 hash=cookie_gen(ip->saddr,ip->daddr,tcp->source,tcp->dest,tcp->seq-1);
-        if(tcp->ack_seq==hash+1) //pass
+        u32 hash=cookie_gen(pkt.saddr,pkt.daddr,pkt.source,pkt.dest,pkt.seq-1);
+        if(pkt.ack_seq==hash+1) //pass
         {
             if(DEBUG)
             {
@@ -67,12 +67,16 @@ int ingress(struct xdp_md *ctx)
                 bpf_printk("ece flag= %d\n",tcp->ece);
             }
             bpf_map_update_elem(&hash_map,&hash,&tcp->seq,BPF_ANY);
-            tcp->seq--;
+            pkt.seq--;
             tcp->ece=1;
         }
         else
         {
-            u32 seq,*ptr=bpf_map_lookup_elem(&hash_map,&hash);
+            if(DEBUG)
+            {
+                bpf_printk("Not pass\n");
+            }
+            /*u32 seq,*ptr=bpf_map_lookup_elem(&hash_map,&hash);
             if(ptr)
             {
                 bpf_probe_read_kernel(&seq,sizeof(u32),ptr);
@@ -82,8 +86,9 @@ int ingress(struct xdp_md *ctx)
                     bpf_map_delete_elem(&hash_map,&hash);
                 }
             }
-            return XDP_DROP;
+            return XDP_DROP;*/
         }
+        set_pkt(&pkt,tcp,ip);
         return XDP_TX;
     }
     else
