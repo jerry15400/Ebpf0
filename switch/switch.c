@@ -31,16 +31,18 @@ int ingress(struct xdp_md *ctx)
         if(DEBUG)
         {
             bpf_printk("Client SYN\n");
-            bpf_printk("source ip: %d\n",ip->saddr);
-            bpf_printk("dest ip: %d\n",ip->daddr);
-            bpf_printk("source port: %d\n",tcp->source);
-            bpf_printk("dest port: %d\n",tcp->dest);
+            bpf_printk("source ip: %x\n",ip->saddr);
+            bpf_printk("dest ip: %x\n",ip->daddr);
+            bpf_printk("source port: %x\n",tcp->source);
+            bpf_printk("dest port: %x\n",tcp->dest);
         }
-        u32 hash=cookie_gen(ip->saddr,ip->daddr,tcp->source,tcp->dest,tcp->seq);
-        tcp->ack_seq=tcp->seq+1;
-        tcp->seq=hash;
-        swap(&tcp->source,&tcp->dest,sizeof(tcp->dest));
-        swap(&ip->saddr,&ip->daddr,sizeof(ip->daddr));
+        pkt6Tuple pkt;
+        init_pkt(&pkt,tcp,ip);
+        u32 hash=cookie_gen(pkt.saddr,pkt.daddr,pkt.source,pkt.dest,pkt.seq);
+        pkt.ack_seq=pkt.seq+1;
+        pkt.seq=hash;
+        swap(&pkt.source,&pkt.dest,sizeof(pkt.dest));
+        swap(&pkt.saddr,&pkt.daddr,sizeof(pkt.daddr));
         swap(eth->h_source,eth->h_dest,sizeof(eth->h_dest));
         u32 *flag_ptr=(void*)tcp+12;
         if((void*)flag_ptr+4>data_end) return XDP_DROP;
@@ -50,6 +52,7 @@ int ingress(struct xdp_md *ctx)
         u32 csum=tcp->check;
         csum=bpf_csum_diff(&bflag,4,&aflag,4,~csum);
         tcp->check=csum_fold_helper(csum);
+        set_pkt(&pkt,tcp,ip);
         return XDP_TX;
     }
     else if(!tcp->syn&&tcp->ack) //ACK

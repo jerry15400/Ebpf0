@@ -43,6 +43,37 @@ const int c1 = 0x6e646f6d;
 const int c2 = 0x6e657261;
 const int c3 = 0x79746573;
 
+typedef struct pkt6tuple
+{
+	u32 saddr;
+	u32 daddr;
+	u16 source;
+	u16 dest;
+	u32 seq;
+	u32 ack_seq;
+}pkt6Tuple;
+
+static __always_inline void init_pkt(pkt6Tuple *pkt,struct tcphdr *tcp,struct iphdr *ip)
+{
+	pkt->saddr=ntohl(ip->saddr);
+	pkt->daddr=ntohl(ip->daddr);
+	pkt->source=ntohs(tcp->source);
+	pkt->dest=ntohs(tcp->dest);
+	pkt->seq=ntohl(tcp->seq);
+	pkt->ack_seq=ntohl(tcp->ack_seq);
+}
+
+static __always_inline void set_pkt(pkt6Tuple *pkt,struct tcphdr *tcp,struct iphdr *ip)
+{
+	ip->saddr=htonl(pkt->saddr);
+	ip->daddr=htonl(pkt->daddr);
+	tcp->source=htons(pkt->source);
+	tcp->dest=htons(pkt->dest);
+	tcp->seq=htonl(pkt->seq);
+	tcp->ack_seq=htonl(pkt->ack_seq);
+}
+
+
 static inline uint32_t rol(uint32_t word, uint32_t shift){
 	return (word<<shift) | (word >> (32 - shift));
 }
